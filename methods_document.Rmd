@@ -1,0 +1,386 @@
+---
+title: "Methods Document"
+author: "Team mate 1, Avery, Team mate 2, Team mate 3"
+output: pdf_document
+date: "`r Sys.Date()`"
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+source("02_analysis_code.R")
+```
+
+# Contributions
+
+Avery: Code for getting date of Parkrun from html and calculating week, code for question 1 mean attendance for park locations, code for question 6.
+Credit to Team 2 for overlap matrix from question 3.
+
+Team Mate 2: Code in question 2 and 3 in `02_analysis_code`, Interpretation for question 2 and 3 in Key Questions Report, created the initial structure and skeleton of `02_analysis_code.R` and `key_questions_report.Rmd`
+
+Team mate 1: Code for impution of missing values in `01_tidy_data.R`, interpretation of imputation process in Methods Document, Interpretation of question 5 in Key Questions Report, as well as code in `02_analysis_code.R`.
+
+Team mate 3: `00_cleaned_dataset` code and `01_tidy_data` code for data cleaning and final tidy data set, code and interpretation for question 4 in `02_analysis_code` and interpretation for question 1 and 4 in Key Questions Report, README file for purpose and descriptions of data sets and script descriptions, additions to methods document for data cleaning and question 4, aesthetics for Key Questions Report, project management.
+
+# Entire Pipeline
+
+The data is first cleaned and imputed to form the tidy data zip file. The tidy data is used as input for visualisation to help answer Puma's 6 key questions for non-technical audiences. The Key Questions Report interprets these visualisations to answer Puma's marketing questions and provide insight for the Puma marketing team. The methods document is an additional document that provides contextual information (i.e. documentation and for reproducibility) for Puma's Data Scientists.   
+
+# Required Packages and Libraries
+
+`tidyverse` - for cleaning data 
+
+`reshape2` - to reshape data  
+
+`geosphere` - for longitude and latitude calculations
+
+`paletteer` - for colour pallette
+
+`digest` - for hashing names
+
+`rvest` - for webscrapping 
+
+`mice` - for MICE imputation 
+
+`kable and kableExtra` - for styling tables
+
+
+# Data Cleaning
+
+The `00_cleaned_dataset` R file prepares all the data for analysis by cleaning and naming variables, as well as hashing the names of the Parkrunners for anonymity.
+Local variables are created and assigned to regular expressions `(regex)` to help separate variables from the original, messy data files.
+The `parse_park_file(file_path)` function retrieves the park name and associated number from the name of each file, and returns them as a list of park, filnum tuples.
+The `median_age_int(band)` calculates the median value of the age bands from the data or returns a NA integer value if the age band is missing in the data set, giving a single age value for analysis and interpretation.
+
+The files are then parsed through using `lapply`.
+The processing method starts by retrieving the park and filenum for the given file.
+Then, the file is read, and variables are renamed to avoid the inclusion of spaces.
+
+A tibble is created, and the park and filenum information is added, as well as the position of the runner.
+The Parkrunner name is extracted from the string as well as the number of Parkruns, gender and gender position of the individual for the given run.
+The age data is then extracted, including age grade, group, and category.
+The median age is then calculated.
+The club name is then extracted and added to a club variable or otherwise given the value NA.
+The official times are extracted using `regex` and normalised to be in the format HH:MM:SS, and NA values are kept as NA.
+The times are then converted to seconds with the `lubridate` function and added to the tibble for easier time analysis and imputation.
+This process is repeated for pb times.
+
+The tibble is built for each file and added to a file containing all tibbles.
+The tibbles are then combined with the function `bind_rows(df_list)` and unneeded variables are dropped (for converting the times) to create a dataframe, `parkrun_all`, that contains all the Parkrun variables.
+
+The names of the runners are then hashed for anonymity, providing runner IDs.
+This process used the `md5` algorithm and a salt from the digest package.
+The salt ensures that IDs are uniquely calculated and, therefore, truly anonymous and secure.
+The salt is included in the filename for reproducible IDs by Puma.
+The names are normalised to be completely lower case, and the algorithm is applied to give an ID of numbers and letters.
+The IDs are then attached to the tibble to be associated with the individual, remaining anonymous when given to the Puma team.
+
+Finally, the output is given by writing to a CSV file, though the tibble can also be accessed by sourcing the `00_cleaned_dataset` file and calling the `parkrun_all` data frame.
+
+The `01_tidy_data` R file simply selects and renames the variables to match the statement of work, using the associated functions from the tidyverse library.
+The file then uses imputation to deal with missing data.
+Read about the imputation process in the imputation section of this document.
+
+Further improvements could include more tidy regex so the code can be more readable to programmers who regularly use R (and don't know how to read `regex`), including those at Puma.
+This could be done with the use of the `xml2` R package.
+Also, when converting times, a less case-sensitive boolean can be used to differentiate between a time that is minutes and seconds vs a time that is hours, minutes and seconds.
+This issue was difficult to overcome as the inconsistent time formats were often misinterpreted by `lubridate` functions.
+This limits universal use of the code and should be reconsidered before applying to larger Parkrun datasets.
+For improved privacy, another algorithm, such as `HMAC`, can be used to reduce collisions as well as further maintain anonymity.
+Furthermore, the salt can be kept in a different environment rather than the script itself for improved security.
+Additionally, unit tests and linting can be applied to both test the data cleaning process for potential edge cases as well as to maintain a consistent style guide throughout the project.
+
+# Getting Correct Week for Parkruns
+
+The files in the dataset didn't include any information about when the Parkrun events were held.
+We initially attempted to web scrape the Parkrun website directly.
+However, any of the results pages for The Parkrun website forbid any web scraping, so it was necessary to download all of the HTML pages and scrape them locally.
+
+First, we needed to transform the local dataset names into Parkrun URLs to make the process more efficient.
+This was necessary to first get a list of pages for HTML to download.
+As well as avoiding the inefficiency of manually typing each page.
+After creating the list of URLs, we only needed to download the HTML pages locally and then initiate the web scraping.
+This is because the names of files correspond to `location/result/parkrun_id` for that Parkrun.
+So it was key to transform files to make the process more efficient and not need to manually type all dates.
+
+The format of the date on the pages was stored as a string separated by backslashes.
+Which needs to convert using `Lubridate` and then find the week that date was, as the difference between the date and 1st of January as the number of days.
+The calculation for the week number was to take the remainder of 7 and then add 1 to get the correct week number.
+
+Joining this data to tidydata before gave new tidy data which included correct week.
+
+In order to improve efficiency of code we also added if statements for scraping code.
+If there was no initial `week.csv` file it would mean that would need to scrape all parkrun html and then create `week.csv`.
+So in future if cleaned R environment wouldn't need to scrape all html again and could instead join csv onto `tidy_data` by `file_num` improving efficiency.
+
+For future usage, it would be advisable to contact Parkrun for API access to not have to go through process of manually downloading HTML pages for parkruns.
+Especially if Puma would like to continue to use future data or explore marketing opportunities at different locations in NZ.
+Scraping all pages HTML would be very inefficient.
+
+# Imputation of Missing Values
+
+A lot of the variables were missing data, we overcame this by using data imputation.
+We used the mice package in R to perform multiple imputation by chained equations (MICE).
+This method fills in missing data by creating multiple complete datasets, analyzing each one separately, and then combining the results.
+One issue we came across was the time variable was in a character format (mm:ss) so we converted this to a numeric format (seconds) for the imputation process.
+After imputation, we tried to convert it back to the character format, but there was a problem with the lubridate function we used.
+So we kept the time variable in seconds for the analysis.
+Which is also easier to interpret and analyze statistically.
+Originally we also imputed the club variable, But we had not considered that not all runners belong to a club so we decided to keep the missing values as NA, and ignore the club variable in the analysis.
+
+Limitations: The MICE workflow assumes missing values are at least missing at random given the predictors in the model; if time, age, or age grade are absent for slower finishers or certain clubs, the imputed values may still be biased.
+Using only a single completed dataset in downstream code also understates the uncertainty introduced by the imputation step.
+
+Future Improvements: Expand the predictor matrix (e.g., include weather or course difficulty proxies), retain and pool results across multiple imputed datasets, and add sensitivity checks that rerun the analysis on an observed-only subset to quantify the impact of imputed values.
+
+To check how well the imputations align with the original data we first source the tidy dataset and MICE model objects, then compare observed and imputed values.
+
+```{r}
+source("01_tidy_data.R", echo = FALSE)
+```
+
+```{r, fig}
+imputed_data <- mice::complete(imp, 1)
+
+diagnostic_summary <- bind_rows(
+  tidy_data |>
+    select(id, time, age, age_grade) |>
+    mutate(data_source = "Observed"),
+  imputed_data |>
+    select(id, time, age, age_grade) |>
+    mutate(data_source = "Imputed")
+) |>
+  pivot_longer(
+    cols = c(time, age, age_grade),
+    names_to = "variable",
+    values_to = "value"
+  ) |>
+  summarise(
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    n_missing = sum(is.na(value)),
+    .by = c(data_source, variable)
+  ) |>
+  mutate(data_source = factor(data_source, levels = c("Observed", "Imputed"))) |>
+  arrange(variable, data_source) |>
+  pivot_wider(names_from = data_source, values_from = c(mean, sd, n_missing)) |> knitr::kable() |> kableExtra::kable_styling(font_size = 8) 
+
+diagnostic_summary
+```
+
+### Figure 1.1: Comparison of Observed vs Imputed Values for Age, Age Grade and Time
+
+```{r}
+
+bind_rows(
+  tidy_data |>
+    mutate(data_source = "Observed"),
+  imputed_data |>
+    mutate(data_source = "Imputed")
+) |>
+  filter(!is.na(time)) |>
+  ggplot(aes(x = time, colour = data_source, fill = data_source)) +
+  geom_density(alpha = 0.2) +
+  theme_minimal() +
+  labs(
+    title = "Observed vs Imputed Time Distribution",
+    x = "Time (seconds)",
+    y = "Density",
+    colour = "Data source",
+    fill = "Data source"
+  )
+```
+
+### Figure 2: The Distribution of Observed Time Values (blue) Compared to The Distribution of Imputed Time Values (red)
+
+These diagnostics show the summary statistics before and after imputation alongside a density comparison split by observed/imputed values.
+Small differences between the paired metrics and overlapping distributions support that the imputation preserved the structure of the original data.
+
+```{r}
+time_missing <- is.na(tidy_data$time)
+
+imputed_only <- imputed_data |>
+  mutate(source = if_else(time_missing, "Imputed (new)", "Observed (original)")) |>
+  filter(source == "Imputed (new)") |>
+  select(time, source)
+
+observed_reference <- tidy_data |>
+  filter(!is.na(time)) |>
+  mutate(source = "Observed (original)") |>
+  select(time, source)
+
+bind_rows(observed_reference, imputed_only) |>
+  ggplot(aes(x = time, colour = source, fill = source)) +
+  geom_density(alpha = 0.3) +
+  theme_minimal() +
+  labs(
+    title = "Distribution of Newly Imputed Times",
+    x = "Time (seconds)",
+    y = "Density",
+    colour = "Series",
+    fill = "Series"
+  )
+```
+
+### Figure 3: The Distribution of The Original Observed Time Values (blue) Compared to The Distribution of New Imputed Time Values (red)
+
+This follow-up view isolates the times that were originally missing and replaced by MICE.
+Their density sits within the main observed distribution, indicating that the imputation model is drawing plausible values rather than extreme outliers.
+
+# Data Analysis and associated Key Questions Report
+
+`02_analysis_code` is an R file that contains the code described below for each question.
+Throughout the code, the tidyverse package is used to adhere to tidy data principles.
+The file loads the final parkrun dataset CSV as a data frame for analysis code.
+
+# Question 1
+
+Lines 12 to 18 of `02_analysis_code.R` First selects appropriate columns from cleaned data set.
+This gives for all rows the week of park run and location.
+Then counting the week and parkrun gives attendance to parkrun for certain week.
+Taking mean of this gives mean attendance for parkrun at different locations Last line arranges from most to least for mean attendance.
+
+# Question 2
+
+This code obtains the proportion of the new runners against the returning runners to know if new people come each week or they are always the same people.
+First, entries with missing IDs were removed because it won’t be possible to analyze runners without their unique identification.
+Then, the data were arranged by week to monitor participation in sequence.
+For each week, runners were categorized as:
+
+New runners: Participants who were not seen in the previous weeks.
+
+Returning runners: Participants who have attended in the prior week(s).
+
+The percentage was computed by dividing the counts by the total participants and multiplying by 100.
+The data were shaped into long format by `pivot_longer()` in order to have each row represent a single observation for a single category.
+Then, a 100% stacked bar chart was used to have a clear comparison between each week, which was created with `ggplot2`.
+New runners were represented in light green, while returning runners were represented in dark green.
+
+# Question 3
+
+This code produces a heatmap that shows the intensity of shared runners between the different Parkrun locations.
+“Intensity” in this context refers to the count of runners that change locations or overlap.
+First, a “runner x parkrun attendance matrix” was created.
+A value of 1 was given to each attendance, while missing values were filled with 0 to indicate absence.
+The data were shaped into wide format by `pivot_wider()` in order to have a row for each runner and a column for each Parkrun.
+
+The transposed attendance matrix was multiplied by itself to calculate the overlap matrix.
+Then, the matrix was converted into long format using `melt()`.
+Self-loops were also removed to make sure that the graph doesn’t show a Parkrun that overlaps with itself.
+
+The heatmap was created using `ggplot2`.
+The axes represent the different Parkrun locations.
+The fill color represents the number of shared runners: light blue for low and dark blue for high.
+
+# Question 4
+
+This code defines what an elite runner is and forms a visualisation to show which Parkrun has the highest number of elite runners.
+We started by calculating the top 5% of all Parkrun results for PB and age grade using the imputed data set.
+We used this as a criterion to filter out only the top 5% of athletes for the analysis.
+We then constructed a bar chart of the number of elite runners per Parkrun, with the `ggplot` function and `geom_col()` graph from the `ggplot2` R package.
+We also calculated the percentage of runners at each Parkrun location that are elite by counting the total number of distinct runners per Parkrun location and the number of elite runners per Parkrun, and finding a proportion of elite runners per Parkrun location over the total number of elite runners per Parkrun location.
+We then converted this proportion to a percentage and arranged the results in descending order before using the ggplot function and `geom_col()` to create a bar chart for visualisation.
+
+Future Improvements: The elite runner definition can be redefined to be more informative.
+For example, creating a dynamic 5% threshold which is calculated per park or by using more parameters to define "elite" (i.e. consistency).
+The visualisation can also be improved, for example, by using an interactive density map of Christchurch Parkrun location, with the number of elite runners shown by the density at each location.
+
+# Question 5
+
+This code measures runner consistency across Christchurch Parkruns.
+For the analysis We removed entries with missing runner IDs so attendance could be tracked through time.
+Runners were grouped by ID to count how many events each person completed, and the totals were summarised with `count()`.
+The distribution of attendance was displayed in a labelled column chart with integer breaks so that every run frequency remained visible, and the summary table was filtered to report how many runners recorded more than five events.
+
+Consistency by location was examined by grouping attendances by parkrun and runner ID to calculate how many times each runner returned to a specific course.
+These records were collapsed to a course-level summary containing the mean and median runs per runner together with the number of distinct runners.
+We added a horizontal bar chart ordered by average runs compared how consistently participants return to each location.
+
+To complement the average, the location-level table was left joined with a filtered view (`run_count >= 5`) to capture only consistent runners at each course.
+We made sure that missing joins were replaced with zeros so smaller parks still appear, and a second horizontal bar chart ranked locations by the number of consistent runners.
+This makes the consistent-runner cohort directly comparable with the marketing brief.
+
+Limitations: The 11-week window may not capture seasonal participation patterns, and treating five runs as the consistency threshold can overstate engagement at high-volume parks.
+Residual ID misattribution or missing attendance records will skew the counts, especially for smaller events.
+
+Future Improvements: Test alternative consistency thresholds, extend the analysis once longer time series or cross-season data become available.
+
+# Question 6
+
+Code from 261 to 299 First code reads the text file that contains all latitude and longitude of park locations.
+Next the distance matrix is calculated using `geosphere` package.
+The `distm` calculates distances between all points, calculating distance using `distHaversine` function which is shortest distance assuming spherical earth.
+Matrix is labeled columns and row labels with parkrun locations.
+Using melt function condenses the matrix into a 3 by 49 tibble.
+After filtering when distance equals 0.
+Get final matrix.
+Joining this with previously calculated matrix from question 3 gives a new matrix combining the distances and amount of overlapping runners between locations.
+
+Folders 'intermediate' contain Parkrun latitude and longitude values for Christchurch Parkrun locations.  
+
+```{r fig.cap='Overlap vs distance between parks'}
+non_log_graph
+```
+
+### Figure 4: The Distance Between Parkruns Compared to The Number of Overlapping Runners, Before Taking the Logarithm 
+
+Linear regression for model is given by: $$\ln(\hat{overlap})=5.684-0.053\cdot \hat{distance}$$ The log of overlap changes scale of graph to transform exponential regression into a linear trend making it easier to analyze and model.
+In interpretation of linear trend need to raise all to exp of coefficients in order to return from log overlap to overlap.
+E.g. interpret the intercept as `exp(5.68460)` equivalent to approximately 294 runners.
+The decrease in overlap is equal to `round((exp(-0.05335),4)` gives `0.948`.
+This is the percentage of remaining overlap after distance increases by 1km.
+However the percentage decrease is equal to `1-0.948`, which the decrease percentage of overlap as distance increases by 1km.
+For interpretation of regression take floor of overlapping runners.
+
+Model had Adjusted R squared of `0.5774`.
+Meaning model explain `57.74%` of variance in overlap.
+This indicates model was good predictor for overlap.
+
+We also checked if model meet requirements for linearity, normality of residuals, and homogeneity of variance.
+
+```{r}
+plot(dist_overlap,which = c(1))
+```
+
+### Figure 5.1: Linearity Test for Linear Regression Model
+
+Shows no clear trend in reference line.
+Passes requirements for linearity
+
+```{r}
+plot(dist_overlap,which = c(2))
+```
+
+### Figure 5.2: Normality of Reisduals Test for Linear Regression Model
+
+Most dot fall across QQ line.
+Indicating the residuals are normally distributed.
+Passes requirement for normality of residuals
+
+```{r}
+plot(dist_overlap,which = c(3))
+```
+
+### Figure 5.3: Homogeneity of Variance Test for Linear Regression Model
+
+About equal variance above and below reference lines.
+Meets requirement of homogeneity of variance.
+
+```{r}
+plot(dist_overlap,which = c(4))
+```
+
+### Figure 5.4: Outliers Test Using Cook's Distance
+
+Model has maximum cooks distance of `0.12`, less than threshold of `0.5` so model is resistant to outliers.
+
+This mean model meets all assumptions for linear regression and is appropriate model.
+
+# Color palette
+
+The `Key Questions Report` is an Rmarkdown file with R chunks that contain the visualisation objects sourced from the `02_analysis_code` document. The document also contains text for interpretation of each question.
+The Rmarkdown file is then knitted to pdf to be delivered to Puma. The `paletteer` package is used to get a palette that matches the parkrun website colour scheme. The palette used is: `MetBrewer::Derain`.
+

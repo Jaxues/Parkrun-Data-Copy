@@ -1,0 +1,139 @@
+---
+title: "Key Questions Report"
+author: "Team mate 1, Avery, Team mate 2, Team mate 3"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    df_print: paged
+---
+
+```{r source, warning=FALSE, message=FALSE, echo=FALSE}
+# set-up for data analysis
+source("02_analysis_code.R", echo = FALSE)
+```
+
+## Key Question 1: Which Parkrun provides the best marketing opportunity with the largest number of people?
+
+```{r question-1, echo=FALSE, message=FALSE, warning=FALSE}
+counts_week %>%
+  knitr::kable(col.names = c("Park Location", "Mean number of attendees"),
+               caption = "Average Attendance per Parkrun", booktabs = TRUE, align = c("l", "c")) %>%
+  
+  kableExtra::kable_classic(full_width = F, font_size = 12)
+```
+
+### Figure 1.1: The Mean Number of Parkrun Attendees Across 11 Weeks of Parkrun Data
+
+The table above shows that parks with largest mean number of runners are Hagley, Riverlution, and Foster. Halswell quarry appears to have very few runners each week. This information can be helpful for the Puma marketing team when looking for the best marketing opportunity via the Parkrun location with the highest number of people.
+
+Below is graph of number of runners at each park.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+q1_graph
+```
+
+### Figure 1.2: The Total Count of Parkrun Attendees Across Different Parkrun Locations 
+
+This bar chart shows the total count of Parkrun attendees per Parkrun location across the 11 week time period. There appears to be a  significantly higher number of Parkrunners at the Hagley park location compared to the other 6 Parkrun locations, with over 5000 people attending the Hagley Parkrun events over the 11 week time period. This suggests that, if Puma's goal is to target the highest number of runners for marketing, they  should focus their marketing strategy towards Hagley park. 
+
+## Key Question 2: Do new people come each week or is it always the same people?
+
+```{r question-2, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+# Call the plot for 100% stacked bar chart of new vs returning runners
+q2_graph
+```
+
+### Figure 2: Proportion of Returning vs New Parkrun Attendees Across 11 Weeks of Parkrun Events 
+
+We evaluated weekly runner data to separate new participants (those who were attending for the first time) from returning participants (those who had visited in prior weeks). The results were shown using a 100% stacked bar chart to visualise the proportion of the new runners (light green) against the returning runners (dark green).
+
+The first week (week 20) shows that everyone is classified as new runners, which makes up the 100%. This makes sense because it is the first week in our data set and there are no prior attendees that will be returning. However, considering the chart's overall pattern, it indicates that the majority of weekly participants are returning runners. And although smaller in proportion, there’s still a consistent number of new runners each week.
+
+From a marketing standpoint, this suggests that Puma should consider using strategies that target both groups. One for recruiting new runners, and another for engaging the returning runners.
+
+\*Note weeks scale from 20 to 31. This corresponds to week of year that it is. E.g. 20 is 20th week of 2025.
+
+## Key Question 3: Do people move between Parkruns? Does this mean if you advertise at fewer places you eventually see people from other locations?
+
+```{r question-3, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+q3_graph
+```
+
+### Figure 3: Number of Runners Going to Parkrun Events at Multiple Locations
+
+To examine if participants move between Parkruns, we constructed a heatmap that shows the intensity of runners that are attending both events. "Intensity" refers to the number of shared runners. The color of the heatmap signifies the intensity with “light blue” as the low and “dark blue” as the high.
+
+The plot shows a noticeable number of shared runners between Hagley and Riverlution. This may be because both parkrun locations are geographically close, making it easier for the participants to switch between the two venues. The majority of the overlaps are relatively lighter, which indicates that most of the runners prefer to stay in one Parkrun. Therefore, by advertising in fewer Parkruns, we will eventually see people from other locations but only extend to a subset of the Parkrun community.
+
+From a marketing standpoint, it is advisable that Puma advertise across different Parkrun locations to ensure maximum exposure to the target group.
+
+## Key Question 4: If Puma want to target elite runners, where should they focus their efforts?
+
+Elite runners are classified as having pb time and age grade results in the top 5% of all Parkrun results over the 11 week time period, for all Parkrun locations. The individuals with top 5% results are grouped by Parkrun locations and a count of and percentage of elite runners per Parkrun is calculated to visualise the distribution of elite runners at different Parkrun locations.
+
+```{r question-4.1, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=4, fig.align="center"}
+q4_graph_total
+```
+
+### Figure 4.1: Total Number of Elite Runners at Each Parkrun Location Across 11 Weeks of Parkrun Events
+
+The graph shows the total number of elite runners per Parkrun location in Christchurch. Hagley park has the highest total number of elite runners, with other 300 runners being elite (in the top 5% of results). Riverlution, Foster, Pegasus and Broadpark locations all have significantly lower number of elite runners, at less than 100 elite runners each. These results suggests that Puma should target Hagley park if they aim to market towards elite runners.  
+
+```{r question-4.2, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, fig.align="center"}
+q4_graph_proportion
+```
+
+### Figure 4.2: Percentage of Elite Runners at Each Parkrun Location Across 11 Weeks of Parkrun Events
+
+This graph uses proportions to visualise the percentage of elite runners at each Parkrun location in order to mitigate the effects of more popular Parkruns having more elite runners.This allows for better interpretation by Puma's marketing team. The graph shows that Scarborough and Hagley have the highest proportion of elite runners, with each park having around 12.5% of their runners being elite. The difference for Scarborough in the percentage graph compared to the counts graph suggest that Hagley park has a larger total number of runners, however, Scarborough has a higher proportion of its runners classified as elite. The Pegasus, Foster, Riverlution and Broadpark locations all have between about 6% and 10% elite runners whilst less than 1% of Halswell Quarry's runners are elite.These percentages show that to target the highest proportion of elite runners, Puma should look towards marketing at Scarborough and Hagley park.  
+
+Puma might consider targeting elite runners as these runners could lead to increased credibility by acting as role models and lending prestige to Parkrun locations. Elite runners can also attract more attention to Parkrun events, including more spectators and participants. This might also be facilitated through elite runner social media followings and can enable sponsorship opportunities. From the data, it is advised that Puma advertise at Scarborough and Hagley to target the highest proportion of elite runners. 
+
+## Key Question 5: Puma believe more consistent runners have better potential as customers, how many runners are consistent and is consistency different across locations?
+
+```{r question-5, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=4, fig.align="center"}
+q5_consistency_plot
+```
+
+### Figure 5.1: The Number of Runners Compared to the Number of Runs Attended 
+
+Consistency is the number of runs each person turned up to across the 11 weeks. For this question we call a runner consistent if they showed up to five or more runs. There are 1070 consistent runners out of 5022 total runners, which is 21% of everyone in the data. The boxplot above shows the spread for all runners: the median runner came twice, most people did between 1 and 4 runs, and the most frequent runner made it to 18 events.
+
+```{r question-5.2, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.align="center"}
+q5_location_consistency_plot
+```
+
+### Figure 5.2: The Average Number of Runs Attended per Parkrun Location Across 11 Weeks of Parkrun Events
+
+
+```{r, echo=F}
+summary(location_consistency) |> knitr::kable()
+```
+
+### Figure 5.3: Summary Table of Number of Runs per Parkrun
+
+The box plot shows how often runners return to each park. The median number of runs is 1 for every location except Pegasus, which has a median of 2. The interquartile mean range for all locations sits between 1.8 and 2.375 runs attended. Pegasus, Foster, Hagley and Scarborough all average 2 or more runs, while Broadpark, Halswell Quarry and Riverlution average less than 2. This tells us the level of consistency changes from park to park.
+
+```{r question-5.3, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.align="center"}
+q5_consistent_runner_counts_plot
+```
+
+### Figure 5.4: Number of Consistent Runners at Each Parkrun Location
+
+The bar chart focuses only on consistent runners, those who completed five or more events, and counts how many of them attended each Parkrun location. Hagley and Foster stand out with the largest pools of consistent runners, while Riverlution and Halswell Quarry have the fewest. This indicates that Puma will find more reliable repeat attendees at Hagley and Foster, even after controlling for consistency.
+
+## Key Question 6: Does the distance between Parkrun locations predict the amount of mixing of people between those locations? 
+
+```{r question-6, echo=FALSE, message=FALSE, warning=FALSE}
+pred_dist
+```
+
+### Figure 6: The Distance Between Parkruns versus The Number of Overlapping Runners
+
+Regression for overlap after transforming from log overlap to overlap is given by:
+$$\hat{overlap}=294\cdot 0.9484^{\hat{distance}}$$
+This means the initial overlap for same park is 294. 
+Every increase of distance by 1km will lead to approximately 5.12% decrease in overlap of runners.
+This shows as distance between parks increase the overlap of runners decreases.
+
+Regression has R squared of 57.74%. Meaning that variance in distance explains  57.74% of variance in overlap. This is strong indication of trend.
