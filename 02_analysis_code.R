@@ -174,19 +174,19 @@ q3_graph <- ggplot(overlap_long, aes(x = from, y = to, fill = weight)) +
 # elite defined as having a pb time and age grade in the top 5% of all results
 
 # Finding top 5%
-top10_pb_time_M <- tidy_data_imputed |>
+top10_pb_time_M <- tidy_data |>
   filter(sex == "Male") |>
   arrange(pb_seconds) |>
   head(720) # 5% pb time, males, highest = 1196
-top10_pb_time_F <- tidy_data_imputed |>
+top10_pb_time_F <- tidy_data |>
   filter(sex == "Female") |>
   arrange(pb_seconds) |>
   head(720) # 5% pb time, females, highest = 1499
-top10_age_grade <- tidy_data_imputed |>
+top10_age_grade <- tidy_data |>
   arrange(desc(age_grade)) |>
   head(720) # 5% age grade, lowest = 69
 
-elite_runners <- tidy_data_imputed |>
+elite_runners <- tidy_data |>
   group_by(id, sex, parkrun) |>
   summarise(
     best_time = min(pb_seconds, na.rm = TRUE), # find the best time for each individual
@@ -200,7 +200,7 @@ elite_runners <- tidy_data_imputed |>
   filter(is_elite == TRUE) # filter to include only elite runners
 
 # Number of unique runners per parkrun
-total_runners <- tidy_data_imputed |>
+total_runners <- tidy_data |>
   group_by(parkrun) |>
   summarise(total_participants = n_distinct(id))
 

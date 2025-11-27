@@ -3,19 +3,8 @@
 # getting cleaned dataset from 00_cleaned_dataset
 source("00_cleaned_dataset.R")
 
-# install packages if necessary
-packages <- c("tidyverse", "stringr", "mice", "rvest", "lubridate")
-
-for (pkg in packages) {
-  if (!require(pkg, character.only = TRUE)) {
-    install.packages(pkg)
-    library(pkg, character.only = TRUE)
-  }
-}
-
 # loading packages
 library(tidyverse)
-library(mice)
 library(rvest)
 
 # parkrun_tidy already exists from source()
@@ -114,38 +103,8 @@ if ("filenum" %in% colnames(tidy_data)) {
     select(id, week, parkrun, sex, age, club, time, pb_seconds, age_grade)
 }
 
-# Mice Imputation for missing values
-set.seed(123)
-
-meth <- make.method(tidy_data)
-pred <- make.predictorMatrix(tidy_data)
-
-# Do NOT impute id or club, and do NOT use them to predict others
-meth["id"] <- ""
-meth["club"] <- ""
-pred["id", ] <- 0
-pred["club", ] <- 0
-pred[, "id"] <- 0
-pred[, "club"] <- 0
-
-# Identify numeric vars and set PMM for those (time, age, week, etc.)
-num_vars <- names(tidy_data)[vapply(tidy_data, is.numeric, logical(1))]
-meth[num_vars] <- "pmm"
-
-imp <- mice(
-  tidy_data,
-  m = 5,
-  maxit = 10,
-  method = meth,
-  predictorMatrix = pred,
-  printFlag = FALSE
-)
-
-# get one completed dataset
-tidy_data_imputed <- complete(imp, 1)
-
 # to filter out the added variables for a data set with variables from SOW
-tidy_data_final <- tidy_data_imputed |> select(
+tidy_data_final <- tidy_data |> select(
   id, week,
   parkrun, sex, age, club, time
 )
